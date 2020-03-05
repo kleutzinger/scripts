@@ -45,11 +45,13 @@ def get_ts_mp4_paths(_dir='./'):
 
 
 def promptTsFiles(ts_paths):
+    skipConversion = False
     for idx, ts_path in enumerate(ts_paths):
+        if skipConversion:
+            break
         ts = os.path.basename(ts_path)
         # print(ts_path)
         size = file_size(ts_path)
-        skipConversion = False
         while not skipConversion:
             prompt = f'#{idx+1}/{len(ts_paths)}\n'
             prompt += f'{ts} \nsize: {size}\n'
@@ -63,11 +65,11 @@ def promptTsFiles(ts_paths):
                 append_to_filename = input(f'rename to: {no_extension}')
                 new_filename = no_extension + append_to_filename + ext
                 os.rename(ts_path, new_filename)
-                print("renamed: ", new_filename)
+                print('renamed: ', new_filename)
                 ts = new_filename
                 ts_path = os.path.abspath(ts)
             elif cmd == 'd':  # move to delete folder
-                os.makedirs("del", exist_ok=True)
+                os.makedirs('del', exist_ok=True)
                 source = ts_path
                 destination = os.path.join(os.path.curdir, "del", ts)
                 os.rename(source, destination)
@@ -83,12 +85,12 @@ def promptTsFiles(ts_paths):
     return get_ts_paths()
 
 
-def addBrackets(_str):
-    return f'[{_str}]'
+def addBrackets(str_):
+    return f'({str_})'
     # return '[' + _str + ']'
 
 
-def generateTitleString(ts_basename, batch_idx=''):
+def generateTitleString(ts_basename, tournament_name=''):
     try:
         leading_nums = ts_basename[:15]
         year = leading_nums[:4]
@@ -98,13 +100,15 @@ def generateTitleString(ts_basename, batch_idx=''):
         month = num2month[month]
         day = leading_nums[6:8]
         date_str = ' '.join([year, month, day])
-        if len(ts_basename) > 18:  # filename has added title
-            date_str = ' ' + date_str
+        # if len(ts_basename) > 18:  # filename has added title
+        # date_str = ' ' + date_str
         date_str = addBrackets(date_str)
         filename, ext = os.path.splitext(ts_basename)
-        if len(batch_idx) > 0:
-            batch_idx = addBrackets(batch_idx)
-        return f'{batch_idx}{filename[15:]} {date_str}{ext}'
+        # if len(batch_idx) > 0:
+        #     batch_idx = addBrackets(batch_idx)
+        if len(tournament_name) > 0:
+            tournament_name = addBrackets(tournament_name)
+        return f'{filename[15:]} {date_str} {tournament_name}{ext}'
     except Exception as e:
         print(e)
         return ts_basename
@@ -129,20 +133,24 @@ def copyTS(ts_paths=get_ts_paths()):
     # goto new folder and covnert c
 
 
-def convert(ts_paths=get_ts_paths()):  # makes file.mp4 in mp4 folder
+def convert(ts_paths=get_ts_paths(), append_to_filename=''):  # makes file.mp4 in mp4 folder
     outputMP4s = []
     for idx, ts_path in enumerate(ts_paths):
         ts_dirname = os.path.dirname(ts_path)
         os.makedirs(os.path.join(ts_dirname, 'mp4'), exist_ok=True)
         idx_no = str(idx+1).zfill(2)
+        basename = os.path.basename(ts_path)
+        # mp4name = generateTitleString(
+        #     basename, f'{idx_no}_{len(ts_paths)}')
         mp4name = generateTitleString(
-            os.path.basename(ts_path), f'{idx_no}/{len(ts_paths)}')
+            basename, append_to_filename)
+
         mp4name = replaceExtension(mp4name, '.mp4')
         # figure out why not mp4 folder?
         outputPath = os.path.join(ts_dirname, 'mp4', mp4name)
         outputMP4s.append(outputPath)
         subprocess.call(
-            f'ffmpeg -i "{ts_path}" -preset faster -vf scale=1280:-2 "{outputPath}"', shell=True)
+            f'ffmpeg -i "{ts_path}" -preset veryfast -vf scale=1280:-2 "{outputPath}"', shell=True)
     return outputMP4s
 
 
@@ -171,10 +179,11 @@ def uploadVideo(videoPath, title='', desc='', vis=''):
 
 def getGlobalFlags():
     flags = dict()
-    flags['doOneThing'] = input('justDo [N/A]rompt [u]pload: ')
-    flags['tournament'] = input('Tournament Name?: ')
-    flags['bracketURL'] = input('Bracket URL?: ')
-    flags['visibility'] = input('[p]ublic [u]nlisted: ')
+    flags['doOneThing'] = False
+    #flags['doOneThing'] = input('justDo [N/A]rompt [u]pload: ')
+    flags['tournament_name'] = input('Tournament Name?: ')
+    #flags['bracketURL'] = input('Bracket URL?: ')
+    #flags['visibility'] = input('[p]ublic [u]nlisted: ')
     return flags
 
 
@@ -188,7 +197,14 @@ if __name__ == '__main__':
     ts_paths = get_ts_files()  # current folder ts paths
     renamed_ts_paths = promptTsFiles(ts_paths)
     copied_output_folder = copyTS(renamed_ts_paths)
-    output_mp4_paths = convert(get_ts_paths(copied_output_folder))
+    output_mp4_paths = convert(get_ts_paths(
+        copied_output_folder), flags['tournament_name'])
+    subprocess.call(
+        f'notify-send -u critical "conversion complete {copied_output_folder}/mp4"', shell=True)
+
+    # Disable uploads (api rate-limited too heavily)
+    """
     for mp4_path in output_mp4_paths:
         uploadVideo(
             mp4_path, desc=flags['bracketURL'], vis=flags['visibility'])
+    """

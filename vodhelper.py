@@ -138,7 +138,7 @@ def convert(ts_paths=get_ts_paths(), append_to_filename=''):  # makes file.mp4 i
     for idx, ts_path in enumerate(ts_paths):
         ts_dirname = os.path.dirname(ts_path)
         os.makedirs(os.path.join(ts_dirname, 'mp4'), exist_ok=True)
-        idx_no = str(idx+1).zfill(2)
+        # idx_no = str(idx+1).zfill(2)
         basename = os.path.basename(ts_path)
         # mp4name = generateTitleString(
         #     basename, f'{idx_no}_{len(ts_paths)}')

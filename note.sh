@@ -17,7 +17,8 @@ function usage() {
 mkdir -p "$NOTE_DIR"
 
 if [ $# -eq 0 ]; then
-    $EDITOR "$NOTE_DIR/$(date +'%Y-%m-%d').md"
+    # days roll over at 5:00 am rather than midnight
+    $EDITOR "$NOTE_DIR/$(date --date="5 hours ago" +'%Y-%m-%d').md"
 else
   case $1 in
     grep)

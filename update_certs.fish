@@ -56,6 +56,9 @@ else
     echo "Do not overwrite. Exiting"
     exit 0
 end
+set SSL_DIR /etc/nginx/sll
+mkdir -p SSL_DIR
+cp server.crt server.key $SSL_DIR
 
 DOKKU_CMD global-cert:set < certs.tar
 

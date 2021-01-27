@@ -6,7 +6,7 @@ set LEKTOR_PORT 9001
 curl localhost:$LEKTOR_PORT -s > /dev/null
 if test $status -eq 0
     echo "already running, opening new tab"
-    chromium "http://localhost:$LEKTOR_PORT"
+    $BROWSER "http://localhost:$LEKTOR_PORT"
     exit 0
 end
 

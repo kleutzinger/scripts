@@ -1,6 +1,6 @@
 #!/usr/bin/env fish
 # concat all `note.md`s to a single `tmp.html`
-# open in chromium
+# open in $BROWSER
 cd /home/kevin/notes/
 set OUT (mktemp --suffix ".html")
 
@@ -22,4 +22,4 @@ body {
   width: 500px;
 }
 </style>" >> $OUT
-chromium $OUT > /dev/null
+$BROWSER $OUT > /dev/null
